@@ -34,8 +34,16 @@ impl<T: Ord + std::fmt::Display + Clone> BinST<T>{
         BinST{root: None}
     }
     fn maxLST(current_node: &mut BinaryNode<T>) -> T{
-        if current_node.right != None{
+        if current_node.right.as_ref().unwrap().right != None{
             Self::maxLST(current_node.right.as_mut().unwrap())
+        }else{
+            let temp = current_node.right.take();
+            temp.unwrap().entry
+        }
+    }
+    fn maxRST(current_node: &mut BinaryNode<T>) -> T{
+        if current_node.left.as_ref().unwrap().right != None{
+            Self::maxLST(current_node.left.as_mut().unwrap())
         }else{
             let temp = current_node.left.take();
             temp.unwrap().entry
@@ -73,22 +81,53 @@ impl<T: Ord + std::fmt::Display + Clone> BinST<T>{
             Ok(current_node.entry.clone())
         }   
     }
-    fn recRemove(entry: T, current_node: &mut BinaryNode<T>){
+    fn recRemove(entry: T, current_node: &mut BinaryNode<T>) -> Option<Box<BinaryNode<T>>>{
         if entry > current_node.entry{
             if current_node.right == None {
-                return
+                None
             }else{
-                Self::recRemove(entry, current_node.right.as_mut().unwrap());
+                if current_node.right.as_ref().unwrap().entry == entry {
+                    let rightCheck: bool = current_node.right.as_ref().unwrap().right == None;
+                    let leftCheck: bool = current_node.right.as_ref().unwrap().left == None;
+                    if leftCheck && rightCheck{
+                        let temp = current_node.right.take();
+                        temp
+                    }else{
+                        Self::recRemove(entry, current_node.right.as_mut().unwrap());
+                    }
+                }else{
+                    Self::recRemove(entry, current_node.right.as_mut().unwrap());
+                }
             }
         }else if entry < current_node.entry{
             if current_node.left == None {
-                return
+                None
             }else{
-                Self::recRemove(entry, current_node.left.as_mut().unwrap());
+                if current_node.left.as_ref().unwrap().entry == entry {
+                    let rightCheck: bool = current_node.left.as_ref().unwrap().right == None;
+                    let leftCheck: bool = current_node.left.as_ref().unwrap().left == None;
+                    if leftCheck && rightCheck{
+                        let temp = current_node.left.take();
+                        temp
+                    }else{
+                        Self::recRemove(entry, current_node.right.as_mut().unwrap());
+                    }
+                }else{
+                    Self::recRemove(entry, current_node.right.as_mut().unwrap());
+                }
             }
         }else{
-            current_node.entry = Self::maxLST(current_node);
-        }           
+            let rightCheck: bool = current_node.right == None;
+            if rightCheck {
+                let rightCheck2: bool = current_node.left.as_ref().unwrap().right == None;
+                let leftCheck2: bool = current_node.left.as_ref().unwrap().left == None;
+                if leftCheck2 && rightCheck2 {
+                    let temp1 = current_node.left.take();
+                    let temp2 = current_node.left.take();
+                    temp.unwrap().entry 
+                }
+            }
+        }         
     }
     pub fn insert(&mut self, entry: T){
         if self.root == None{self.root = Some(BinaryNode::new(entry))}
@@ -105,5 +144,9 @@ impl<T: Ord + std::fmt::Display + Clone> BinST<T>{
             Ok(Self::recSearch(entry, root_mut)?)
         }
         
+    }
+    pub fn remove(&mut self, entry: T){
+        let root_mut = self.root.as_mut().unwrap();
+        Self::recRemove(entry, root_mut);
     }
 }
