@@ -29,14 +29,14 @@ impl<T: Ord + std::fmt::Display + Clone> BinST<T>{
             Some(node) => Self::maxLST(&mut node.right),
         }
     }
-    fn maxRST(current_node: &mut BinaryChild<T>) -> T{
+    fn minRST(current_node: &mut BinaryChild<T>) -> T{
         let Some(current) = &mut current_node.0 else{panic!("What")};
         match &mut current.left.0 {
             None => {
                 let returnVal = current_node.0.take();
                 returnVal.unwrap().entry
             },
-            Some(node) => Self::maxRST(&mut node.left),
+            Some(node) => Self::minRST(&mut node.left),
         }
     }
     fn recInsert(entry: T, current_node: &mut BinaryChild<T>){
@@ -63,7 +63,7 @@ impl<T: Ord + std::fmt::Display + Clone> BinST<T>{
         match &mut current_node.0 {
             None => {}
             Some(current) => match entry.cmp(&current.entry) {
-                Ordering::Less => Self::recInsert(entry, &mut current.left),
+                Ordering::Less => Self::recRemove(entry, &mut current.left),
                 Ordering::Equal => {
                     match (&mut current.left.0, &mut current.right.0){
                         (None, None) => {
@@ -73,11 +73,11 @@ impl<T: Ord + std::fmt::Display + Clone> BinST<T>{
                             current_node.0.as_mut().unwrap().entry = Self::maxLST(&mut current.left);
                         },
                         (_, Some(_right)) => {
-                            current_node.0.as_mut().unwrap().entry = Self::maxRST(&mut current.right);
+                            current_node.0.as_mut().unwrap().entry = Self::minRST(&mut current.right);
                         }
                     }
                 }
-                Ordering::Greater => Self::recInsert(entry, &mut current.right),
+                Ordering::Greater => Self::recRemove(entry, &mut current.right),
             },
         }
     }
