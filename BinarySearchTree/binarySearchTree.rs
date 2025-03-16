@@ -1,152 +1,106 @@
 use std::cmp::Ordering;
 struct BinaryNode<T: Ord>{
     entry: T,
-    left: Option<Box<BinaryNode<T>>>,
-    right: Option<Box<BinaryNode<T>>>
+    left: BinaryChild<T>,
+    right: BinaryChild<T>
 }
+struct BinaryChild<T: Ord>(Option<Box<BinaryNode<T>>>);
+impl<T:Ord> BinaryChild<T>{fn new() -> Self {Self(None)}}
     impl<T: Ord> BinaryNode<T>{
-        fn new(entry: T) -> Self{
-            Self{entry, left: None, right: None}
+        pub fn new(entry: T) -> Self{
+            Self{entry, left: BinaryChild::new(), right: BinaryChild::new()}
         }
     }
-    impl<T: Ord> Ord for BinaryNode<T>{
-        fn cmp(&self, other: &Self) -> Ordering {
-            self.entry.cmp(&other.entry)
-        }
-    }
-    impl<T: Ord> PartialOrd for BinaryNode<T> {
-        fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-            Some(self.cmp(other))
-        }
-    }
-    impl<T: Ord> Eq for BinaryNode<T> {}
-impl<T: Ord> PartialEq for BinaryNode<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.entry == other.entry
-    }
-}
 
 struct BinST<T: Ord>{
-    root: Option<BinaryNode<T>>
+    root: BinaryChild<T>
 }
 impl<T: Ord + std::fmt::Display + Clone> BinST<T>{
     pub fn new() -> Self{
-        BinST{root: None}
+        BinST{root: BinaryChild::new()}
     }
-    fn maxLST(current_node: &mut BinaryNode<T>) -> T{
-        if current_node.right.as_ref().unwrap().right != None{
-            Self::maxLST(current_node.right.as_mut().unwrap())
-        }else{
-            let temp = current_node.right.take();
-            temp.unwrap().entry
+    fn maxLST(current_node: &mut BinaryChild<T>) -> T{
+        let Some(current) = &mut current_node.0 else{panic!("What")};
+        match &mut current.right.0 {
+            None => {
+                let returnVal = current_node.0.take();
+                returnVal.unwrap().entry
+            },
+            Some(node) => Self::maxLST(&mut node.right),
         }
     }
-    fn maxRST(current_node: &mut BinaryNode<T>) -> T{
-        if current_node.left.as_ref().unwrap().right != None{
-            Self::maxLST(current_node.left.as_mut().unwrap())
-        }else{
-            let temp = current_node.left.take();
-            temp.unwrap().entry
+    fn maxRST(current_node: &mut BinaryChild<T>) -> T{
+        let Some(current) = &mut current_node.0 else{panic!("What")};
+        match &mut current.left.0 {
+            None => {
+                let returnVal = current_node.0.take();
+                returnVal.unwrap().entry
+            },
+            Some(node) => Self::maxRST(&mut node.left),
         }
     }
-    fn recInsert(entry: T, current_node: &mut BinaryNode<T>){
-        if entry > current_node.entry{
-            if current_node.right == None {
-                current_node.right = Some(Box::new(BinaryNode::new(entry)));
-            }else{
-                Self::recInsert(entry, current_node.right.as_mut().unwrap());
-            }
-        }else if entry < current_node.entry{
-            if current_node.left == None {
-                current_node.left = Some(Box::new(BinaryNode::new(entry)));
-            }else{
-                Self::recInsert(entry, current_node.left.as_mut().unwrap());
-            }
+    fn recInsert(entry: T, current_node: &mut BinaryChild<T>){
+        match &mut current_node.0 {
+            None => current_node.0 = Some(Box::new(BinaryNode::new(entry))),
+            Some(current) => match entry.cmp(&current.entry) {
+                Ordering::Less => {Self::recInsert(entry, &mut current.left)},
+                Ordering::Equal => {}
+                Ordering::Greater => Self::recInsert(entry, &mut current.right),
+            },
         }
     }
-    fn recSearch(entry: T, current_node: &BinaryNode<T>) -> Result<T, bool>{
-        if entry > current_node.entry{
-            if current_node.right == None {
-                Err(false)
-            }else{
-                Ok(Self::recSearch(entry, current_node.right.as_ref().unwrap())?)
-            }
-        }else if entry < current_node.entry{
-            if current_node.left == None {
-                Err(false)
-            }else{
-                Ok(Self::recSearch(entry, current_node.left.as_ref().unwrap())?)
-            }
-        }else{
-            Ok(current_node.entry.clone())
-        }   
+    fn recSearch(entry: T, current_node: &BinaryChild<T>) -> Result<T, bool>{
+        match &current_node.0 {
+            None => Err(false),
+            Some(current) => match entry.cmp(&current.entry) {
+                Ordering::Less => Ok(Self::recSearch(entry, &current.left)?),
+                Ordering::Equal => Ok(current.entry.clone()),
+                Ordering::Greater => Ok(Self::recSearch(entry, &current.right)?),
+            },
+        }
     }
-    fn recRemove(entry: T, current_node: &mut BinaryNode<T>) -> Option<Box<BinaryNode<T>>>{
-        if entry > current_node.entry{
-            if current_node.right == None {
-                None
-            }else{
-                if current_node.right.as_ref().unwrap().entry == entry {
-                    let rightCheck: bool = current_node.right.as_ref().unwrap().right == None;
-                    let leftCheck: bool = current_node.right.as_ref().unwrap().left == None;
-                    if leftCheck && rightCheck{
-                        let temp = current_node.right.take();
-                        temp
-                    }else{
-                        Self::recRemove(entry, current_node.right.as_mut().unwrap());
+    fn recRemove(entry: T, current_node: &mut BinaryChild<T>){
+        match &mut current_node.0 {
+            None => {}
+            Some(current) => match entry.cmp(&current.entry) {
+                Ordering::Less => Self::recInsert(entry, &mut current.left),
+                Ordering::Equal => {
+                    match (&mut current.left.0, &mut current.right.0){
+                        (None, None) => {
+                            current_node.0 = None;
+                        },
+                        (Some(_left), None) => {
+                            current_node.0.as_mut().unwrap().entry = Self::maxLST(&mut current.left);
+                        },
+                        (_, Some(_right)) => {
+                            current_node.0.as_mut().unwrap().entry = Self::maxRST(&mut current.right);
+                        }
                     }
-                }else{
-                    Self::recRemove(entry, current_node.right.as_mut().unwrap());
                 }
-            }
-        }else if entry < current_node.entry{
-            if current_node.left == None {
-                None
-            }else{
-                if current_node.left.as_ref().unwrap().entry == entry {
-                    let rightCheck: bool = current_node.left.as_ref().unwrap().right == None;
-                    let leftCheck: bool = current_node.left.as_ref().unwrap().left == None;
-                    if leftCheck && rightCheck{
-                        let temp = current_node.left.take();
-                        temp
-                    }else{
-                        Self::recRemove(entry, current_node.right.as_mut().unwrap());
-                    }
-                }else{
-                    Self::recRemove(entry, current_node.right.as_mut().unwrap());
-                }
-            }
-        }else{
-            let rightCheck: bool = current_node.right == None;
-            if rightCheck {
-                let rightCheck2: bool = current_node.left.as_ref().unwrap().right == None;
-                let leftCheck2: bool = current_node.left.as_ref().unwrap().left == None;
-                if leftCheck2 && rightCheck2 {
-                    let temp1 = current_node.left.take();
-                    let temp2 = current_node.left.take();
-                    temp.unwrap().entry 
-                }
-            }
-        }         
+                Ordering::Greater => Self::recInsert(entry, &mut current.right),
+            },
+        }
     }
     pub fn insert(&mut self, entry: T){
-        if self.root == None{self.root = Some(BinaryNode::new(entry))}
-        else{
-            let root_mut = self.root.as_mut().unwrap();
+        if let Some(_root) = &mut self.root.0 {
+            let root_mut = &mut self.root;
             Self::recInsert(entry, root_mut);
+        }
+        else{
+            self.root.0 = Some(Box::new(BinaryNode::new(entry)));
         }
     }
     pub fn search(&self, entry: T) -> Result<T, bool>{
-        if self.root == None{
-            Err(false)
-        }else{
-            let root_mut = self.root.as_ref().unwrap();
+        if let Some(_root) = &self.root.0{
+            let root_mut = &self.root;
             Ok(Self::recSearch(entry, root_mut)?)
+        }else{
+            Err(false)
         }
         
     }
     pub fn remove(&mut self, entry: T){
-        let root_mut = self.root.as_mut().unwrap();
+        let root_mut = &mut self.root;
         Self::recRemove(entry, root_mut);
     }
 }
