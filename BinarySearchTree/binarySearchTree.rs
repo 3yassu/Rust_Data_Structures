@@ -6,11 +6,11 @@ struct BinaryNode<T: Ord>{
 }
 struct BinaryChild<T: Ord>(Option<Box<BinaryNode<T>>>);
 impl<T:Ord> BinaryChild<T>{fn new() -> Self {Self(None)}}
-    impl<T: Ord> BinaryNode<T>{
-        pub fn new(entry: T) -> Self{
-            Self{entry, left: BinaryChild::new(), right: BinaryChild::new()}
-        }
+impl<T: Ord> BinaryNode<T>{
+    pub fn new(entry: T) -> Self{
+        Self{entry, left: BinaryChild::new(), right: BinaryChild::new()}
     }
+}
 
 struct BinST<T: Ord>{
     root: BinaryChild<T>
@@ -20,8 +20,7 @@ impl<T: Ord + std::fmt::Display + Clone> BinST<T>{
         BinST{root: BinaryChild::new()}
     }
     fn maxLST(current_node: &mut BinaryChild<T>) -> T{
-        let Some(current) = &mut current_node.0 else{panic!("What")};
-        match &mut current.right.0 {
+        match &mut current_node.0.as_mut().unwrap().right.0 {
             None => {
                 let returnVal = current_node.0.take();
                 returnVal.unwrap().entry
@@ -30,8 +29,7 @@ impl<T: Ord + std::fmt::Display + Clone> BinST<T>{
         }
     }
     fn minRST(current_node: &mut BinaryChild<T>) -> T{
-        let Some(current) = &mut current_node.0 else{panic!("What")};
-        match &mut current.left.0 {
+        match &mut current_node.0.as_mut().unwrap().left.0 {
             None => {
                 let returnVal = current_node.0.take();
                 returnVal.unwrap().entry
@@ -81,6 +79,14 @@ impl<T: Ord + std::fmt::Display + Clone> BinST<T>{
             },
         }
     }
+    fn recOrder(func: fn(&T), current_node: &BinaryChild<T>, order: i32){
+        let Some(entry) = &current_node.0 else{return;};
+        if order == 0 {func(&entry.entry);}
+        Self::recOrder(func, &current_node.0.as_ref().unwrap().left, order);
+        if order == 1 {func(&entry.entry);}
+        Self::recOrder(func, &current_node.0.as_ref().unwrap().right, order);
+        if order == 2 {func(&entry.entry);}
+    }
     pub fn insert(&mut self, entry: T){
         if let Some(_root) = &mut self.root.0 {
             let root_mut = &mut self.root;
@@ -102,5 +108,15 @@ impl<T: Ord + std::fmt::Display + Clone> BinST<T>{
     pub fn remove(&mut self, entry: T){
         let root_mut = &mut self.root;
         Self::recRemove(entry, root_mut);
+    }
+    pub fn order(&self, func: fn(&T), order: &str){
+        let root_mut = &self.root;
+        if order == "pre" {
+            Self::recOrder(func, root_mut, 0);
+        }else if order == "in" {
+            Self::recOrder(func, root_mut, 1);
+        }else if order == "post" {
+            Self::recOrder(func, root_mut, 2);
+        }
     }
 }
