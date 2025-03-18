@@ -16,7 +16,7 @@ struct Queue<T: Ord>{
     front: NodeChild<T>,
     back: NodeChild<T>
 }
-impl<T: Ord + std::fmt::Display> Queue<T>{
+impl<T: Ord + std::fmt::Display + Clone> Queue<T>{
     pub fn new() -> Self{
         Self{front: NodeChild::new(), back: NodeChild::new()}
     }
@@ -47,10 +47,10 @@ impl<T: Ord + std::fmt::Display> Queue<T>{
             Some(front) => self.front.0 = Some(Rc::clone(front.borrow_mut().next.0.as_ref().unwrap()))
         }
     }
-    pub fn peek_front(&self) -> Result<&T, bool>{
+    pub fn peek_front(&mut self) -> Result<T, bool>{
         match &self.front.0{
             None => Err(false),
-            Some(front) => Ok(&front.borrow().entry)
+            Some(front) => Ok(self.front.0.as_ref().unwrap().borrow_mut().entry.clone())
         }
     }
 }
