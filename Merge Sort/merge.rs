@@ -13,3 +13,6 @@ fn merge(list_1: Vec<T: Ord>, list_2: Vec<T: Ord>){
     }
     return_list
 }
+fn merge_sort(merge_list: Vec<T: Ord>){
+    merge_list.split_off(merge_list.len()/2)
+}
