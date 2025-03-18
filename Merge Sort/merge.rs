@@ -16,6 +16,6 @@ fn merge<T: Ord>(mut list_1: Vec<T>, mut list_2: Vec<T>) -> Vec<T>{
 }
 fn merge_sort<T: Ord>(mut merge_list: Vec<T>) -> Vec<T>{
     if merge_list.len() == 1 {return merge_list;}
-    let mut recurse_list = merge_list.split_off(merge_list.len()/2);
+    let recurse_list = merge_list.split_off(merge_list.len()/2);
     merge(merge_sort(merge_list), merge_sort(recurse_list))
 }
