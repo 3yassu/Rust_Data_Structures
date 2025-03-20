@@ -3,7 +3,7 @@ struct Node<T: Ord>{
     entry: T,
     next: NodeChild<T>,
 }
-type NodeChild<T: Ord> = Option<NonNull<Node<T>>>>;
+type NodeChild<T: Ord> = Option<NonNull<Node<T>>>;
 impl<T: Ord> Node<T>{
     pub fn new(entry: T) -> Self{
         Self{entry, next: None}
@@ -19,7 +19,7 @@ impl<T: Ord + std::fmt::Display> Queue<T>{
         Self{front: NodeChild::new(), back: NodeChild::new()}
     }
     pub fn is_empty(&self) -> bool{
-        match &self.front.0 {
+        match &self.front {
             None => true,
             Some(_node) => false,
         }
@@ -39,13 +39,17 @@ impl<T: Ord + std::fmt::Display> Queue<T>{
             }
         }
     }
-    pub fn dequeue(&mut self){
-            match self.front.0.take(){
-                None => {},
-                Some(front) => unsafe{
-                    self.front = Some((*front.as_ptr()).next)
+    pub fn dequeue(&mut self) -> Option<T>{
+        unsafe {
+            self.front.map(|node| {
+                let boxed = Box::from_raw(node.as_ptr()); let result = boxed.entry;
+                self.front = Some((*boxed.as_ptr()).next);
+                match self.front.take() {
+                    None => self.back = None,
+                    Some => {}
                 }
-            }
+            })
+        }
     }
     pub fn peek_front(&self) -> Option<Ref<T>>{
         match &self.front.0{
