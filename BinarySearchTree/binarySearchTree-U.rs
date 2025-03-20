@@ -1,14 +1,14 @@
 use std::cmp::Ordering;
+use std::ptr::NonNull;
 struct BinaryNode<T: Ord>{
     entry: T,
     left: BinaryChild<T>,
     right: BinaryChild<T>
 }
-struct BinaryChild<T: Ord>(Option<Box<BinaryNode<T>>>);
-impl<T:Ord> BinaryChild<T>{fn new() -> Self {Self(None)}}
+type BinaryChild<T: Ord> = (Option<NonNull<BinaryNode<T>>>);
 impl<T: Ord> BinaryNode<T>{
     pub fn new(entry: T) -> Self{
-        Self{entry, left: BinaryChild::new(), right: BinaryChild::new()}
+        Self{entry, left: None, right: None}
     }
 }
 
