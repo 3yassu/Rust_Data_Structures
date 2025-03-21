@@ -77,7 +77,7 @@ impl<T: Ord + std::fmt::Display> SinglyLinkedList<T>{
         
     }
     /*
-    pub fn remove(&mut self, entry: T){
+    pub fn remove_node(&mut self, entry: T){
         let root_mut = &mut self.root;
         Self::recRemove(entry, root_mut);
     }
