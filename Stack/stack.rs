@@ -33,17 +33,17 @@ impl<T> Stack<T>{
         self.top = NodeChild(self.top.0.as_mut().unwrap().next.0.take());
     }
     pub fn peek(&self) -> Option<&T>{
-        &self.top.0.as_ref().map(|top| {&mut top.entry})
+        self.top.0.as_ref().map(|top| {&top.entry})
     }
     pub fn peek_mut(&mut self) -> Option<&mut T>{
-        &mut self.top.0.as_mut().map(|top| {&mut top.entry})
+        self.top.0.as_mut().map(|top| {&mut top.entry})
     }
 }
 impl<T> Drop for Stack<T>{
     fn drop(&mut self) {
-        let mut cur_node = self.head.take();
+        let mut cur_node = self.top.0.take();
         while let Some(mut node) = cur_node {
-            cur_node = node.next.take();
+            cur_node = node.next.0.take();
         }
     }
 }
