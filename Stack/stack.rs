@@ -42,8 +42,8 @@ impl<T> Stack<T>{
 impl<T> Drop for Stack<T>{
     fn drop(&mut self) {
         let mut cur_node = self.head.take();
-        while let Some(mut node) = cur_link {
-            cur_link = node.next.take();
+        while let Some(mut node) = cur_node {
+            cur_node = node.next.take();
         }
     }
 }
