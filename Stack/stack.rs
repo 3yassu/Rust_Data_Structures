@@ -1,19 +1,19 @@
-struct Node<T: Ord>{
+struct Node<T>{
     entry: T,
     next: NodeChild<T>,
 }
-struct NodeChild<T: Ord>(Option<Box<Node<T>>>);
-impl<T:Ord> NodeChild<T>{fn new() -> Self {Self(None)}}
-impl<T: Ord> Node<T>{
+struct NodeChild<T>(Option<Box<Node<T>>>);
+impl<T> NodeChild<T>{fn new() -> Self {Self(None)}}
+impl<T> Node<T>{
     pub fn new(entry: T) -> Self{
         Self{entry, next: NodeChild::new()}
     }
 }
 
-struct StackNode<T: Ord>{
+struct Stack<T>{
     top: NodeChild<T>
 }
-impl<T: Ord + std::fmt::Display + Clone> StackNode<T>{
+impl<T> Stack<T>{
     pub fn new() -> Self{
         Self{top: NodeChild::new()}
     }
@@ -32,7 +32,18 @@ impl<T: Ord + std::fmt::Display + Clone> StackNode<T>{
     pub fn pop(&mut self){
         self.top = NodeChild(self.top.0.as_mut().unwrap().next.0.take());
     }
-    pub fn peek(&self) -> T{
-        self.top.0.as_ref().unwrap().entry.clone()
+    pub fn peek(&self) -> Option<&T>{
+        &self.top.0.as_ref().map(|top| {&mut top.entry})
+    }
+    pub fn peek_mut(&mut self) -> Option<&mut T>{
+        &mut self.top.0.as_mut().map(|top| {&mut top.entry})
+    }
+}
+impl<T> Drop for Stack<T>{
+    fn drop(&mut self) {
+        let mut cur_node = self.head.take();
+        while let Some(mut node) = cur_link {
+            cur_link = node.next.take();
+        }
     }
 }
