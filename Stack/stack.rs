@@ -3,10 +3,16 @@ struct Node<T>{
     next: NodeChild<T>,
 }
 struct NodeChild<T>(Option<Box<Node<T>>>);
-impl<T> NodeChild<T>{fn new() -> Self {Self(None)}}
+impl<T> NodeChild<T>{
+    fn new() -> Self {Self(None)}
+    fn new_node(node: Node<T>) -> Self {Self(Some(Box::new(node)))}
+}
 impl<T> Node<T>{
     pub fn new(entry: T) -> Self{
         Self{entry, next: NodeChild::new()}
+    }
+    pub fn new_next(entry: T, next: NodeChild<T>) -> Self{
+        Self{entry, next}
     }
 }
 
@@ -24,10 +30,8 @@ impl<T> Stack<T>{
         }
     }
     pub fn push(&mut self, entry: T){
-        let mut newTop = NodeChild::new();
-        newTop.0 = Some(Box::new(Node::new(entry)));
-        newTop.0.as_mut().unwrap().next = NodeChild(self.top.0.take());
-        self.top = newTop;
+        let new_top = NodeChild::new_node(Node::new_next(entry, NodeChild(self.top.0.take())));
+        self.top = new_top;
     }
     pub fn pop(&mut self) -> Option<T>{
         self.top.0.take().map(|top| {self.top = top.next; top.entry})
@@ -70,9 +74,6 @@ impl<'b, T> Iterator for IterMut<'b, T> {
     }
 }
 impl<T> Stack<T> {
-    pub fn into_iter(self) -> IntoIter<T> {
-        IntoIter(self)
-    }
     pub fn iter(&mut self) -> Iter<'_, T> {
         Iter(self.top.0.as_deref())
     }
@@ -80,3 +81,35 @@ impl<T> Stack<T> {
         IterMut(self.top.0.as_deref_mut())
     }
 }
+impl<T> IntoIterator for Stack<T> {
+    type Item = T;
+    type IntoIter = IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter(self)
+    }
+}
+impl<'a, T> IntoIterator for &'a Stack<T> {
+    type Item = &'a T;
+    type IntoIter = Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Iter(self.top.0.as_deref())
+    }
+}
+impl<'a, T> IntoIterator for &'a mut Stack<T> {
+    type Item = &'a mut T;
+    type IntoIter = IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IterMut(self.top.0.as_deref_mut())
+    }
+}
+impl<T> FromIterator<T> for Stack<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let mut stack = Stack::new();
+        for item in iter {stack.push(item);}
+        stack
+    }
+}
+
