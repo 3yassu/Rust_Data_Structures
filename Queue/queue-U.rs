@@ -70,12 +70,50 @@ impl<T> Iterator for IntoIter<T> {
         self.0.dequeue()
     }
 }
+pub struct Iter<'a, T>(Option<&'a Node<T>>);
+impl<'a, T> Iterator for Iter<'a, T> {
+    type Item = &'a T;
+    fn next(&mut self) -> Option<Self::Item> {
+        unsafe{self.0.take().map(|node| {self.0 = node.next.map(|new| {new.as_ref()}); &node.entry})}
+    }
+}
+pub struct IterMut<'b, T>(Option<&'b mut Node<T>>);
+impl<'b, T> Iterator for IterMut<'b, T> {
+    type Item = &'b mut T;
+    fn next(&mut self) -> Option<Self::Item> {
+        unsafe{self.0.take().map(|mut node| {self.0 = node.next.map(|mut new| {new.as_mut()}); &mut node.entry})}
+    }
+}
+impl<T> Queue<T> {
+    pub fn iter(&mut self) -> Iter<'_, T> {
+        unsafe{Iter(self.front.map(|new| {new.as_ref()}))}
+    }
+    pub fn iter_mut(&mut self) -> IterMut<'_, T> {
+        unsafe{IterMut(self.front.map(|mut new| {new.as_mut()}))}
+    }
+}
 impl<T> IntoIterator for Queue<T> {
     type Item = T;
     type IntoIter = IntoIter<T>;
 
     fn into_iter(self) -> Self::IntoIter {
         IntoIter(self)
+    }
+}
+impl<'a, T> IntoIterator for &'a Queue<T> {
+    type Item = &'a T;
+    type IntoIter = Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        unsafe{Iter(self.front.map(|new| {new.as_ref()}))}
+    }
+}
+impl<'a, T> IntoIterator for &'a mut Queue<T> {
+    type Item = &'a mut T;
+    type IntoIter = IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
     }
 }
 impl<T> FromIterator<T> for Queue<T> {

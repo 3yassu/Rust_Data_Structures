@@ -94,7 +94,7 @@ impl<'a, T> IntoIterator for &'a Stack<T> {
     type IntoIter = Iter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        Iter(self.top.0.as_deref())
+        self.iter()
     }
 }
 impl<'a, T> IntoIterator for &'a mut Stack<T> {
@@ -102,14 +102,16 @@ impl<'a, T> IntoIterator for &'a mut Stack<T> {
     type IntoIter = IterMut<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        IterMut(self.top.0.as_deref_mut())
+        self.iter_mut()
     }
 }
 impl<T> FromIterator<T> for Stack<T> {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let mut stack = Stack::new();
         for item in iter {stack.push(item);}
-        stack
+        let mut return_stack = Stack::new();
+        for item in stack {return_stack.push(item)}
+        return_stack
     }
 }
 
