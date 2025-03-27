@@ -11,7 +11,6 @@ impl<T: Ord> BinaryNode<T>{
         Self{entry, left: None, right: None}
     }
 }
-
 struct BinST<T: Ord>{
     root: BinaryChild<T>
 }

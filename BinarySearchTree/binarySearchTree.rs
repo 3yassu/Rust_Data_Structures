@@ -116,3 +116,25 @@ impl<T: Ord + std::fmt::Display> BinST<T>{
         else if order == "post" {Self::recOrder(func, root_mut, 2);}
     }
 }
+
+struct NodeChild<T>(Option<Box<Node<T>>>);
+impl<T> NodeChild<T>{fn new() -> Self {Self(None)}}
+struct Node<T>{
+    entry: T,
+    next: NodeChild<T>
+}
+struct IntoIter<T>(NodeChild<T>);
+impl<T> IntoIter<T>{
+    fn push(&mut self, entry: T, cur_node: &mut NodeChild<T>){
+        match &mut cur_node.0{
+            Some(node) => self.push(entry, &mut node.next),
+            None => cur_node.0 = Some(Box::new(Node{entry, next: NodeChild::new()}))
+        }
+    }
+}
+impl<T> Iterator for IntoIter<T> {
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.0.take().map(|top| {self.0 = top.next; top.entry})
+    }
+}
