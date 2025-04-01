@@ -50,4 +50,60 @@ impl<T> LinkedList<T>{
             self.len += 1;
         }
     }
+    pub fn pop_front(&mut self) -> Option<T>{
+        unsafe{
+            self.front.map( |node| {
+                let boxed = Box::from_raw(node.as_ptr());
+                let return_entry = boxed.entry;
+                self.front = boxed.forw;
+                match &mut self.front{
+                    Some(new) => (*new.as_ptr()).back = None,
+                    None => self.back = None,
+                }
+                self.len -= 1;
+                return_entry
+            })
+        }
+    }
+    pub fn pop_back(&mut self) -> Option<T>{
+        unsafe{
+            self.back.map( |node| {
+                let boxed = Box::from_raw(node.as_ptr());
+                let return_entry = boxed.entry;
+                self.front = boxed.forw;
+                match &mut self.front{
+                    Some(new) => (*new.as_ptr()).forw = None,
+                    None => self.front = None,
+                }
+                self.len -= 1;
+                return_entry
+            })
+        }
+    }
+    pub fn peek_front(&self) -> Option<&T>{
+        unsafe{self.front.map(|node| &(*node.as_ptr()).entry)}
+    }
+    pub fn peek_front_mut(&mut self) -> Option<&mut T>{
+        unsafe{self.front.map(|node| &mut (*node.as_ptr()).entry)}
+    }
+    pub fn peek_back(&self) -> Option<&T>{
+        unsafe{self.back.map(|node| &(*node.as_ptr()).entry)}
+    }
+    pub fn peek_back_mut(&mut self) -> Option<&mut T>{
+        unsafe{self.back.map(|node| &mut (*node.as_ptr()).entry)}
+    }
+    pub fn len(&self) -> usize{
+        self.len
+    }
+    pub fn is_empty(&self) -> bool{
+        self.len == 0
+    }
+    pub fn clear(&mut self){
+        while self.pop_front().is_some(){}
+    }
+}
+impl<T> Drop for LinkedList<T> {
+    fn drop(&mut self){
+        while self.pop_front().is_some(){}
+    }
 }
