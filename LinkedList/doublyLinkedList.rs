@@ -12,6 +12,7 @@ impl<T> Node<T>{
     }
 }
 type NodeChild<T> = Option<NonNull<Node<T>>>;
+
 pub struct LinkedList<T>{
     front: NodeChild<T>,
     back: NodeChild<T>,
