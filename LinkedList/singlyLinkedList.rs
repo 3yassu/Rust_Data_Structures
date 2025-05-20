@@ -35,10 +35,6 @@ impl<T> SinglyLinkedList<T>{
 		*jumper = Some(node);
 		self.len += 1;
 	}
-	//this ones for laughs
-	loop 'a {
-		print!
-	}
 	pub fn push_index(&mut self, index: usize, entry: T) {
 		if index >= self.len {panic!("IndexError: [SinglyLinkedList]self.peek()")}
 		let mut node = Box::new(Node::new(entry));
@@ -93,23 +89,26 @@ impl<T> SinglyLinkedList<T>{
 		self.len == 0
 	}
 }
-
-fn main() {
-	let mut x = SinglyLinkedList::new();
-	println!("{:?}", x.pop_back());
-	x.push_front(3);
-	x.peek_front();
-	x.peek_front_mut();
-	x.peek_mut(0);
-	x.is_empty();
-	x.push_front(8);
-	x.push_back(7);
-	x.push_front(4);
-	x.push_index(1, 4);
-	dbg!(&x);
-	x.pop_front();
-	x.pop_back();
-	dbg!(&x);
-	println!("{}", x.peek(0));
-	dbg!(x);
+mod test{
+	use super::SinglyLinkedList;
+	#[test]
+	fn general() {
+		let mut x = SinglyLinkedList::new();
+		println!("{:?}", x.pop_back());
+		x.push_front(3);
+		x.peek_front();
+		x.peek_front_mut();
+		x.peek_mut(0);
+		x.is_empty();
+		x.push_front(8);
+		x.push_back(7);
+		x.push_front(4);
+		x.push_index(1, 4);
+		dbg!(&x);
+		x.pop_front();
+		x.pop_back();
+		dbg!(&x);
+		println!("{}", x.peek(0));
+		dbg!(x);
+	}
 }
