@@ -5,12 +5,10 @@ struct BinaryNode<T: Ord>{
 	left: BinaryChild<T>,
 	right: BinaryChild<T>
 }
-#[derive(Debug)]
-struct BinaryChild<T: Ord>(Option<Box<BinaryNode<T>>>);
-impl<T:Ord> BinaryChild<T>{fn new() -> Self {Self(None)}}
+type BinaryChild<T> = Option<Box<BinaryNode<T>>>;
 impl<T: Ord> BinaryNode<T>{
 	pub fn new(entry: T) -> Self{
-		Self{entry, left: BinaryChild::new(), right: BinaryChild::new()}
+		Self{entry, left: None, right: None}
 	}
 }
 #[derive(Debug)]
@@ -19,99 +17,113 @@ struct BinST<T: Ord>{
 }
 impl<T: Ord> BinST<T>{
 	pub fn new() -> Self{
-		Self{root: BinaryChild::new()}
+		Self{root: None}
 	}
-	fn maxLST(current_node: &mut BinaryChild<T>) -> T{
-		match &mut current_node.0.as_mut().unwrap().right.0 {
+	fn max_lst(current_node: &mut BinaryChild<T>) -> T{
+		match &mut current_node.as_mut().unwrap().right {
 			None => {
-                let ret: T; 
-			    (*current_node, ret) = Self::rem(current_node.0.take());
-			    ret
+				let ret: T; 
+				(*current_node, ret) = Self::rem(current_node.take().unwrap());
+				ret
 			},
-			Some(node) => Self::maxLST(&mut current_node.0.as_mut().unwrap().right),
+			_ => Self::max_lst(&mut current_node.as_mut().unwrap().right),
 		}
 	}
-	fn minRST(current_node: &mut BinaryChild<T>) -> T{
-		match &mut current_node.0.as_mut().unwrap().left.0 {
+	fn min_rst(current_node: &mut BinaryChild<T>) -> T{
+		match &mut current_node.as_mut().unwrap().left {
 			None => {
-                let ret: T; 
-			    (*current_node, ret) = Self::rem(current_node.0.take());
-			    ret
+				let ret: T; 
+				(*current_node, ret) = Self::rem(current_node.take().unwrap());
+				ret
 			},
-			Some(node) => Self::minRST(&mut current_node.0.as_mut().unwrap().left),
+			_ => Self::min_rst(&mut current_node.as_mut().unwrap().left),
 		}
 	}
-	fn recInsert(entry: T, current_node: &mut BinaryChild<T>){
-		match &mut current_node.0 {
-			None => current_node.0 = Some(Box::new(BinaryNode::new(entry))),
+	fn rec_insert(entry: T, current_node: &mut BinaryChild<T>){
+		match current_node {
+			None => *current_node = Some(Box::new(BinaryNode::new(entry))),
 			Some(current) => match entry.cmp(&current.entry) {
-				Ordering::Less => Self::recInsert(entry, &mut current.left),
+				Ordering::Less => Self::rec_insert(entry, &mut current.left),
 				Ordering::Equal => {},
-				Ordering::Greater => Self::recInsert(entry, &mut current.right),
+				Ordering::Greater => Self::rec_insert(entry, &mut current.right),
 			},
 		}
 	}
-	fn recSearch(entry: T, current_node: &BinaryChild<T>) -> Option<&T>{
-		match &current_node.0 {
+	fn rec_search(entry: T, current_node: &BinaryChild<T>) -> Option<&T>{
+		match current_node{
 			None => None,
 			Some(current) => match entry.cmp(&current.entry) {
-				Ordering::Less => Self::recSearch(entry, &current.left),
+				Ordering::Less => Self::rec_search(entry, &current.left),
 				Ordering::Equal => Some(&current.entry),
-				Ordering::Greater => Self::recSearch(entry, &current.right),
-			},
+				Ordering::Greater => Self::rec_search(entry, &current.right),
+			}
 		}
 	}
-	fn rem(current_node: Option<Box<BinaryNode<T>>>) -> (BinaryChild<T>, T){
-	    if let Some(mut current) = current_node{
-	        let mut ret_cur: BinaryChild<T> = BinaryChild::new();
-        	let ret = current.entry;
-        	match (&mut current.left.0, &mut current.right.0){
-        		(Some(_left), None) => {
-        			current.entry = Self::maxLST(&mut current.left);
-        			ret_cur.0 = Some(current);
-        		},
-        		(_, Some(_right)) => {
-        			current.entry = Self::minRST(&mut current.right);
-        			ret_cur.0 = Some(current);
-        		}
-        		_ => (),
-        	};
-        	(ret_cur, ret)
-    	}else{panic!("rem should be given a non-empty BinaryChild");}
+	fn rem(mut current: Box<BinaryNode<T>>) -> (BinaryChild<T>, T){
+			let mut ret_cur: BinaryChild<T> = None;
+			let ret = current.entry;
+			match (&mut current.left, &mut current.right){
+				(Some(_left), None) => {
+					current.entry = Self::max_lst(&mut current.left);
+					ret_cur = Some(current);
+				},
+				(_, Some(_right)) => {
+					current.entry = Self::min_rst(&mut current.right);
+					ret_cur = Some(current);
+				}
+				_ => (),
+			};
+			(ret_cur, ret)
 	}
-	fn recRemove(entry: T, current_node: &mut BinaryChild<T>) -> Option<T>{
-		match &mut current_node.0 {
+	fn rec_remove(entry: T, current_node: &mut BinaryChild<T>) -> Option<T>{
+		match current_node {
 			None => None,
 			Some(current) => match entry.cmp(&current.entry) {
-				Ordering::Less => Self::recRemove(entry, &mut current.left),
+				Ordering::Less => Self::rec_remove(entry, &mut current.left),
 				Ordering::Equal => {
-				    let ret: T; 
-				    (*current_node, ret) = Self::rem(current_node.0.take()); 
-				    Some(ret)
+					let ret: T; 
+					(*current_node, ret) = Self::rem(current_node.take().unwrap()); 
+					Some(ret)
 				},
-				Ordering::Greater => Self::recRemove(entry, &mut current.right),
+				Ordering::Greater => Self::rec_remove(entry, &mut current.right),
 			},
 		}
 	}
 	pub fn insert(&mut self, entry: T){
-		if let Some(_root) = &mut self.root.0 {
-			let root_mut = &mut self.root;
-			Self::recInsert(entry, root_mut);
-		}
-		else{
-			self.root.0 = Some(Box::new(BinaryNode::new(entry)));
+		match &mut self.root{
+			None => self.root = Some(Box::new(BinaryNode::new(entry))),
+			_ => Self::rec_insert(entry, &mut self.root)
 		}
 	}
 	pub fn search(&self, entry: T) -> Option<&T>{
-		if let Some(_root) = &self.root.0{
-			let root_mut = &self.root;
-			Self::recSearch(entry, root_mut)
-		}else{
-			None
-		}		
+		self.root.as_ref().and_then(|_| Self::rec_search(entry, &self.root))
 	}
 	pub fn remove(&mut self, entry: T)->Option<T>{
-		let root_mut = &mut self.root;
-		Self::recRemove(entry, root_mut)
+		Self::rec_remove(entry, &mut self.root)
+	}
+	pub fn rec_drop(current_node: &mut BinaryChild<T>){
+		if let Some(current) = current_node{
+			Self::rec_drop(&mut current.left);
+			Self::rec_drop(&mut current.right);
+			Self::rem(current_node.take().unwrap());
+		}
+	}
+}
+impl<T: Ord> Drop for BinST<T> {
+    fn drop(&mut self){
+        Self::rec_drop(&mut self.root);
+    }
+}
+mod test{
+	use super::BinST;
+	#[test]
+	fn general() {
+		let mut x: BinST<i32> = BinST::new();
+		x.insert(100); x.insert(50); x.insert(150);
+		x.insert(75);x.insert(125);x.insert(76);x.insert(124);
+		x.insert(70);x.insert(130);x.insert(73);x.insert(127);
+		print!("{:?}", x.search(74));
+		x.remove(100);
+		dbg!(x);
 	}
 }
